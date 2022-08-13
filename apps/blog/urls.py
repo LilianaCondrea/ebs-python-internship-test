@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
+router.register(r'comments', CommentsViewSet, basename='comment')
 
 urlpatterns = router.urls
 
