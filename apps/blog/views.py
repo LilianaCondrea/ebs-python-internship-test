@@ -12,25 +12,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
 
-class CommentsViewSet(viewsets.ModelViewSet):
-    serializer_class = CommentsSerializer
-    permission_classes = (AllowAny,)
-    authentication_classes = ()
-
-    @serialize_decorator(CommentsSerializer)
-    def post(self, request):
-        validated_data = request.serializer.validated_data
-
-        comments = Comments.objects.create(
-            title=validated_data['title'],
-            slug=validated_data['slug'],
-            body=validated_data['body'],
-            enabled=validated_data['enabled'],
-            category=validated_data['category']
-        )
-        return Response(BlogSerializer(comments).data)
-
-
 
 class BlogListView(GenericAPIView):
     serializer_class = BlogSerializer
@@ -43,25 +24,58 @@ class BlogListView(GenericAPIView):
 
         return Response(BlogSerializer(blogs, many=True).data)
 
-    @serialize_decorator(BlogSerializer)
-    def post(self, request,):
-        validated_data = request.serializer.validated_data
-
-        blogs = Blog.objects.create(
-            title=validated_data['title'],
-            slug=validated_data['slug'],
-            body=validated_data['body'],
-            enabled=validated_data['enabled'],
-            category=validated_data['category']
-        )
-        return Response(BlogSerializer(blogs).data)
 
 class BlogItemView(GenericAPIView):
-    serializer_class = BlogSerializer
+    serializer_class = BlogSerializer, CommentsSerializer
 
     permission_classes = (AllowAny,)
     authentication_classes = ()
 
     def get(self, request, pk):
         blog = get_object_or_404(Blog.objects.filter(pk=pk))
+        comment = Comments.objects.all().filter(blog_id=pk)
+        params = {
+            "blog": BlogSerializer(blog).data,
+            "comment": CommentsSerializer(comment, many=True).data
+        }
+        return Response(params)
+
+
+class CreatePostView(GenericAPIView):
+    serializer_class = BlogSerializer
+
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    @serialize_decorator(BlogSerializer)
+    def post(self, request):
+        validated_data = request.serializer.validated_data
+
+        blog = Blog.objects.create(
+            title=validated_data['title'],
+            slug=validated_data['slug'],
+            body=validated_data['body'],
+            category=validated_data['category'],
+            enabled=True
+        )
+        blog.save()
+
         return Response(BlogSerializer(blog).data)
+
+
+class CreateCommentView(GenericAPIView):
+    serializer_class = CommentsSerializer
+
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    @serialize_decorator(CommentsSerializer)
+    def post(self, request):
+        validated_data = request.serializer.validated_data
+        comments = Comments.objects.create(
+            text=validated_data['text'],
+            blog=validated_data['blog']
+        )
+        comments.save()
+
+        return Response(CommentsSerializer(comments).data)

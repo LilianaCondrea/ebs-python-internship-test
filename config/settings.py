@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'apps.common',
     'apps.users',
-    'apps.blog',
+    'apps.blog'
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
